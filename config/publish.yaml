@@ -13,7 +13,7 @@ rss:
 
 # 文件存储
 storage:
-  output_dir: "./episodes"
+  output_dir: "./output/episodes"
   scripts_dir: "./output/scripts"
   drafts_dir: "./output/drafts"
   rss_file: "./output/rss.xml"

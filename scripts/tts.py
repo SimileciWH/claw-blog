@@ -122,7 +122,7 @@ class TTSGenerator:
             return []
         
         generated = []
-        for script_file in scripts[:3]:  # 每次最多处理 3 个
+        for script_file in scripts[:10]:  # 每次最多处理 10 个
             logger.info(f"Processing: {script_file.name}")
             output = f"./output/episodes/{script_file.stem}.mp3"
             result = self.generate_from_script_file(str(script_file), output)
