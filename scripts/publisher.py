@@ -101,23 +101,27 @@ class Publisher:
         if not output_dir.exists():
             return []
         
-        # 获取所有脚本文件，提取日期和关键字
+        # 获取所有脚本文件，提取日期和内容摘要
         script_info = {}
         if scripts_dir.exists():
             for sf in scripts_dir.glob("script_*.txt"):
-                # 从文件名提取日期部分，比如 script_2026-03-10_001.txt -> 2026-03-10
+                # 从文件名提取日期部分
                 parts = sf.stem.replace('script_', '').split('_')
                 if len(parts) >= 1:
                     date_part = parts[0]
                     try:
                         content = sf.read_text(encoding='utf-8')
-                        keywords = ""
+                        # 提取正文内容（跳过元数据行）
+                        summary = ""
                         for line in content.split('\n'):
                             line = line.strip()
-                            if line.startswith('# 关键字:') or line.startswith('#keywords:'):
-                                keywords = line.split(':')[1].strip() if ':' in line else ''
-                                break
-                        script_info[date_part] = keywords
+                            # 跳过元数据和分隔线
+                            if line.startswith('#') or line.startswith('---') or not line:
+                                continue
+                            # 取第一段有效内容的前26个字
+                            summary = line[:26]
+                            break
+                        script_info[date_part] = summary
                     except:
                         pass
         
@@ -128,12 +132,12 @@ class Publisher:
             # 从文件名提取日期
             date_str = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d")
             
-            # 尝试匹配脚本文件的关键字
-            keywords = script_info.get(date_str, "")
+            # 尝试匹配脚本文件的摘要
+            summary = script_info.get(date_str, "")
             
-            # 组合标题
-            if keywords:
-                final_title = f"{date_str} · {keywords}"
+            # 组合标题：日期 + 26字摘要
+            if summary:
+                final_title = f"{date_str} · {summary}"
             else:
                 final_title = f"{date_str} 新闻播报"
             
