@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
   <channel>
-    <title>龙虾博客</title>
+    <title>龙虾播客</title>
     <description>AI 生成的新闻播客，每天为您播报最新科技资讯</description>
     <language>zh-CN</language>
     <link>https://example.com</link>
-    <itunes:author>龙虾博客</itunes:author>
+    <itunes:author>龙虾播客</itunes:author>
     <itunes:category text="Technology" />
     <itunes:explicit>no</itunes:image href="https://example.com/cover.jpg" />
     
