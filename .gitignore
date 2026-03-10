@@ -16,8 +16,10 @@ logs/
 
 # Output
 output/drafts/
-output/episodes/
 output/scripts/
+
+# Episodes (音频文件，发布时需要)
+# output/episodes/
 
 # Input (optional, can be gitignored)
 inputs/
