@@ -96,20 +96,48 @@ class Publisher:
     def scan_episodes(self) -> List[Dict]:
         """扫描已有的 episodes"""
         output_dir = Path(self.storage.get('output_dir', './output/episodes'))
+        scripts_dir = Path(self.storage.get('scripts_dir', './output/scripts'))
+        
         if not output_dir.exists():
             return []
         
         episodes = []
-        for ep_file in output_dir.glob("*.mp3"):
+        for ep_file in sorted(output_dir.glob("*.mp3"), key=lambda x: x.stat().st_mtime, reverse=True):
             stat = ep_file.stat()
+            
+            # 尝试从对应脚本文件获取标题
+            title = ep_file.stem
+            description = f"第 {ep_file.stem} 期"
+            
+            # 找对应的脚本文件
+            script_name = ep_file.stem.replace('tts_', 'script_') + '.txt'
+            script_file = scripts_dir / script_name
+            
+            if script_file.exists():
+                try:
+                    content = script_file.read_text(encoding='utf-8')
+                    lines = content.split('\n')
+                    # 第一行是标题（去掉 # ）
+                    for line in lines:
+                        line = line.strip()
+                        if line and not line.startswith('#') and not line.startswith('---'):
+                            title = line[:50]  # 限制长度
+                            description = f"AI 播报：{title}"
+                            break
+                except:
+                    pass
+            
+            # 从文件名提取日期和期数
+            date_str = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d")
+            
             episodes.append({
-                'title': ep_file.stem,
+                'title': f"第 {len(episodes)+1} 期 - {date_str}",
                 'url': f"{self.base_url}/episodes/{ep_file.name}",
                 'file': str(ep_file),
                 'length': stat.st_size,
                 'pubDate': datetime.fromtimestamp(stat.st_mtime).strftime('%a, %d %b %Y %H:%M:%S GMT'),
                 'guid': f"episode-{ep_file.stem}",
-                'description': f"第 {ep_file.stem} 期"
+                'description': description
             })
         
         # 按日期排序

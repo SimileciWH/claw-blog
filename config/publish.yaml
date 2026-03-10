@@ -9,11 +9,12 @@ rss:
   language: "zh-CN"
   category: "Technology"
   explicit: "no"
-  cover_image: "./templates/cover.jpg"
+  cover_image: "./cover.jpg"
 
 # 文件存储
 storage:
-  output_dir: "./output/episodes"
+  output_dir: "./episodes"
+  scripts_dir: "./output/scripts"
   drafts_dir: "./output/drafts"
   rss_file: "./output/rss.xml"
   max_episodes: 30  # 保留最近 30 期
