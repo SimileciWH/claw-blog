@@ -60,11 +60,13 @@ class ContentProcessor:
 文章内容: {article.get('summary', '')[:3000]}
 
 请按以下格式输出:
-1. 一句话总结这篇文章的主要内容
-2. 提取 3 个关键字
-3. 判断这篇文章是否值得做成播客 (yes/no)
+1. 一个吸引人的播客标题（20字以内，适合口语表达）
+2. 一句话总结这篇文章的主要内容
+3. 提取 3 个关键字
+4. 判断这篇文章是否值得做成播客 (yes/no)
 
 输出格式:
+TITLE: <20字以内的标题>
 SUMMARY: <一句话总结>
 KEYWORDS: <关键字1>, <关键字2>, <关键字3>
 WORTH_IT: <yes/no>
@@ -99,12 +101,15 @@ WORTH_IT: <yes/no>
     def _parse_llm_response(self, content: str, article: Dict) -> Dict:
         """解析 LLM 响应"""
         lines = content.split('\n')
+        title = ""
         summary = ""
         keywords = []
         worth_it = "yes"
         
         for line in lines:
-            if line.startswith('SUMMARY:'):
+            if line.startswith('TITLE:'):
+                title = line.replace('TITLE:', '').strip()
+            elif line.startswith('SUMMARY:'):
                 summary = line.replace('SUMMARY:', '').strip()
             elif line.startswith('KEYWORDS:'):
                 kw_text = line.replace('KEYWORDS:', '').strip()
@@ -114,6 +119,7 @@ WORTH_IT: <yes/no>
         
         return {
             **article,
+            'title': title,
             'summary_short': summary,
             'keywords': keywords,
             'worth_it': worth_it
@@ -199,9 +205,11 @@ WORTH_IT: <yes/no>
             filepath = output_dir / filename
             
             with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(f"# {article.get('title', '')}\n")
+                # 写入元数据
+                f.write(f"# TITLE: {article.get('title', '')}\n")
                 f.write(f"# 来源: {article.get('source', '')}\n")
                 f.write(f"# 关键字: {', '.join(article.get('keywords', []))}\n")
+                f.write(f"# SUMMARY: {article.get('summary_short', '')}\n")
                 f.write("\n---\n\n")
                 f.write(article['script'])
             
