@@ -62,8 +62,8 @@ class TTSGenerator:
     def generate(self, text: str, output_path: str = None) -> Optional[str]:
         """生成 TTS 音频"""
         if not output_path:
-            date_str = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-            output_path = f"./output/episodes/tts_{date_str}.mp3"
+            # 当没有指定输出路径时，需要外部调用者提供
+            raise ValueError("output_path is required")
         
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -87,6 +87,11 @@ class TTSGenerator:
         if not script_file.exists():
             logger.error(f"Script not found: {script_path}")
             return None
+        
+        # 如果没有指定输出路径，用脚本文件名生成输出路径
+        if not output_path:
+            script_stem = script_file.stem  # e.g., "script_2026-03-10_001"
+            output_path = f"./output/episodes/{script_stem}.mp3"
         
         # 读取脚本，去除标题行
         lines = script_file.read_text(encoding='utf-8').split('\n')
