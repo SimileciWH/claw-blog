@@ -2,9 +2,9 @@
 
 # RSS Feed 配置
 rss:
-  title: "龙虾博客"
+  title: "龙虾播客"
   description: "AI 生成的新闻播客，每天为您播报最新科技资讯"
-  author: "龙虾博客"
+  author: "龙虾播客"
   email: "hello@longxia.blog"
   language: "zh-CN"
   category: "Technology"
