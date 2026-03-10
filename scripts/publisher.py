@@ -36,6 +36,9 @@ class Publisher:
         self.storage = self.config.get('storage', {})
         self.webhook = self.config.get('webhook', {})
         
+        # GitHub Pages URL
+        self.base_url = self.rss_config.get('base_url', 'https://simileciwh.github.io/claw-blog')
+        
     def generate_rss(self, episodes: List[Dict]) -> str:
         """生成 RSS Feed"""
         rss_file = self.storage.get('rss_file', './output/rss.xml')
@@ -101,7 +104,7 @@ class Publisher:
             stat = ep_file.stat()
             episodes.append({
                 'title': ep_file.stem,
-                'url': f"https://example.com/episodes/{ep_file.name}",
+                'url': f"{self.base_url}/episodes/{ep_file.name}",
                 'file': str(ep_file),
                 'length': stat.st_size,
                 'pubDate': datetime.fromtimestamp(stat.st_mtime).strftime('%a, %d %b %Y %H:%M:%S GMT'),
