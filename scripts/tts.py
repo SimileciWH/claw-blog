@@ -88,26 +88,41 @@ class TTSGenerator:
             logger.error(f"Script not found: {script_path}")
             return None
         
-        # 如果没有指定输出路径，用脚本文件名生成输出路径
-        if not output_path:
-            script_stem = script_file.stem  # e.g., "script_2026-03-10_001"
-            output_path = f"./output/episodes/{script_stem}.mp3"
-        
-        # 读取脚本，去除标题行
+        # 读取脚本，提取标题和正文
         lines = script_file.read_text(encoding='utf-8').split('\n')
         text_lines = []
-        skip = False
+        title = ""
+        
         for line in lines:
-            if line.startswith('---'):
-                skip = True
+            # 提取标题
+            if line.startswith('# TITLE:'):
+                title = line.replace('# TITLE:', '').strip()
+                # 清理标题中的非法文件名字符
+                title = self._sanitize_filename(title)
                 continue
-            if not skip:
+            # 跳过元信息行
+            if line.startswith('# ') or line.startswith('---'):
                 continue
             if line.strip():
                 text_lines.append(line)
         
+        # 如果没有指定输出路径，使用标题命名
+        if not output_path and title:
+            output_path = f"./output/episodes/{title}.mp3"
+        elif not output_path:
+            # 备用：用脚本文件名
+            output_path = f"./output/episodes/{script_file.stem}.mp3"
+        
         text = '\n'.join(text_lines)
         return self.generate(text, output_path)
+    
+    def _sanitize_filename(self, name: str) -> str:
+        """清理文件名中的非法字符"""
+        import re
+        # 替换非法字符为下划线
+        name = re.sub(r'[<>:"/\\|?*]', '_', name)
+        # 限制长度
+        return name[:50] if len(name) > 50 else name
     
     def list_voices(self):
         """列出可用声音"""
