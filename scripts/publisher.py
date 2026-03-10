@@ -101,42 +101,35 @@ class Publisher:
         if not output_dir.exists():
             return []
         
-        # 获取所有脚本文件，提取日期和TITLE
+        # 获取所有脚本文件，提取TITLE
         script_info = {}
         if scripts_dir.exists():
             for sf in scripts_dir.glob("script_*.txt"):
-                # 从文件名提取日期部分
-                parts = sf.stem.replace('script_', '').split('_')
-                if len(parts) >= 1:
-                    date_part = parts[0]
-                    try:
-                        content = sf.read_text(encoding='utf-8')
-                        # 提取 TITLE 行
-                        title = ""
-                        summary = ""
-                        for line in content.split('\n'):
-                            line = line.strip()
-                            if line.startswith('# TITLE:') or line.startswith('TITLE:'):
-                                title = line.replace('# TITLE:', '').replace('TITLE:', '').strip()
-                            elif line.startswith('SUMMARY:'):
-                                summary = line.replace('SUMMARY:', '').strip()[:26]
-                        script_info[date_part] = {'title': title, 'summary': summary}
-                    except:
-                        pass
+                # 用完整文件名作为key，比如 2026-03-10_001
+                key = sf.stem.replace('script_', '')
+                try:
+                    content = sf.read_text(encoding='utf-8')
+                    title = ""
+                    for line in content.split('\n'):
+                        line = line.strip()
+                        if line.startswith('# TITLE:') or line.startswith('TITLE:'):
+                            title = line.replace('# TITLE:', '').replace('TITLE:', '').strip()
+                            break
+                    script_info[key] = {'title': title}
+                except:
+                    pass
         
         episodes = []
         for ep_file in sorted(output_dir.glob("*.mp3"), key=lambda x: x.stat().st_mtime, reverse=True):
             stat = ep_file.stat()
             
-            # 从MP3文件名提取日期，比如 script_2026-03-10_001.mp3 -> 2026-03-10
-            ep_name = ep_file.stem  # script_2026-03-10_001
-            parts = ep_name.replace('script_', '').split('_')
-            date_str = parts[0] if parts else datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d")
+            # 从MP3文件名提取key，比如 script_2026-03-10_001.mp3 -> 2026-03-10_001
+            key = ep_file.stem.replace('script_', '')
+            date_str = key.split('_')[0] if '_' in key else "unknown"
             
             # 尝试匹配脚本文件的标题
-            info = script_info.get(date_str, {'title': '', 'summary': ''})
+            info = script_info.get(key, {'title': ''})
             title = info.get('title', '')
-            summary = info.get('summary', '')
             
             # 优先用 LLM 生成的标题，否则用摘要
             if title:
