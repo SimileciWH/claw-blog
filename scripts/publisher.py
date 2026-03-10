@@ -61,9 +61,12 @@ class Publisher:
         self._add_element(channel, 'itunes:category', self.rss_config.get('category', 'Technology'))
         self._add_element(channel, 'itunes:explicit', self.rss_config.get('explicit', 'no'))
         
-        # 封面
+        # 封面 - 使用绝对路径
         cover = self.rss_config.get('cover_image', '')
         if cover:
+            # 转换为绝对路径
+            if not cover.startswith('http'):
+                cover = f"{self.base_url}/{cover.lstrip('./')}"
             itunes_image = ET.SubElement(channel, 'itunes:image')
             itunes_image.set('href', cover)
         
