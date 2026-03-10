@@ -142,7 +142,7 @@ class Publisher:
             
             episodes.append({
                 'title': final_title,
-                'url': f"{self.base_url}/episodes/{ep_file.name}",
+                'url': f"{self.base_url}/output/episodes/{ep_file.name}",
                 'file': str(ep_file),
                 'length': stat.st_size,
                 'pubDate': datetime.fromtimestamp(stat.st_mtime).strftime('%a, %d %b %Y %H:%M:%S GMT'),
