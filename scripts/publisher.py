@@ -116,8 +116,8 @@ class Publisher:
                         summary = ""
                         for line in content.split('\n'):
                             line = line.strip()
-                            if line.startswith('TITLE:'):
-                                title = line.replace('TITLE:', '').strip()
+                            if line.startswith('# TITLE:') or line.startswith('TITLE:'):
+                                title = line.replace('# TITLE:', '').replace('TITLE:', '').strip()
                             elif line.startswith('SUMMARY:'):
                                 summary = line.replace('SUMMARY:', '').strip()[:26]
                         script_info[date_part] = {'title': title, 'summary': summary}
@@ -128,8 +128,10 @@ class Publisher:
         for ep_file in sorted(output_dir.glob("*.mp3"), key=lambda x: x.stat().st_mtime, reverse=True):
             stat = ep_file.stat()
             
-            # 从文件名提取日期
-            date_str = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d")
+            # 从MP3文件名提取日期，比如 script_2026-03-10_001.mp3 -> 2026-03-10
+            ep_name = ep_file.stem  # script_2026-03-10_001
+            parts = ep_name.replace('script_', '').split('_')
+            date_str = parts[0] if parts else datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d")
             
             # 尝试匹配脚本文件的标题
             info = script_info.get(date_str, {'title': '', 'summary': ''})
