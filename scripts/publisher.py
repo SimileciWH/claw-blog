@@ -137,10 +137,8 @@ class Publisher:
             # 优先用 LLM 生成的标题，否则用摘要
             if title:
                 final_title = f"{date_str} · {title}"
-            elif summary:
-                final_title = f"{date_str} · {summary}"
             else:
-                final_title = f"{date_str} 新闻播报"
+                final_title = f"{date_str} · 播客"
             
             episodes.append({
                 'title': final_title,
