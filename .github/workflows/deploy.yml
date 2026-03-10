@@ -1,12 +1,79 @@
-name: Deploy to GitHub Pages
+name: Deploy & Publish
 
 on:
   push:
     branches: [main]
+  schedule:
+    # 每天早上 8 点自动运行
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
+  # 1. 运行测试
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Check syntax
+        run: |
+          python -m py_compile scripts/*.py
+
+  # 2. 生成新节目（仅当有新闻时）
+  publish:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install edge-tts feedparser beautifulsoup4 lxml pyyaml requests
+      
+      - name: Fetch news
+        run: python3 scripts/fetcher.py
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+      
+      - name: Process articles
+        run: python3 scripts/processor.py
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+      
+      - name: Generate TTS
+        run: python3 scripts/tts.py
+      
+      - name: Generate RSS
+        run: python3 scripts/publisher.py
+      
+      - name: Commit and push
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          git diff --staged --quiet || git commit -m "feat: 自动发布新节目"
+          git push
+
+  # 3. 部署到 GitHub Pages
   deploy:
     runs-on: ubuntu-latest
+    needs: test
     permissions:
       contents: write
     concurrency:
