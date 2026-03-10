@@ -101,39 +101,35 @@ class Publisher:
         if not output_dir.exists():
             return []
         
+        # 获取所有脚本文件，提取日期和关键字
+        script_info = {}
+        if scripts_dir.exists():
+            for sf in scripts_dir.glob("script_*.txt"):
+                # 从文件名提取日期部分，比如 script_2026-03-10_001.txt -> 2026-03-10
+                parts = sf.stem.replace('script_', '').split('_')
+                if len(parts) >= 1:
+                    date_part = parts[0]
+                    try:
+                        content = sf.read_text(encoding='utf-8')
+                        keywords = ""
+                        for line in content.split('\n'):
+                            line = line.strip()
+                            if line.startswith('# 关键字:') or line.startswith('#keywords:'):
+                                keywords = line.split(':')[1].strip() if ':' in line else ''
+                                break
+                        script_info[date_part] = keywords
+                    except:
+                        pass
+        
         episodes = []
         for ep_file in sorted(output_dir.glob("*.mp3"), key=lambda x: x.stat().st_mtime, reverse=True):
             stat = ep_file.stat()
             
-            # 尝试从对应脚本文件获取标题和关键字
-            title = ep_file.stem
-            description = f"第 {ep_file.stem} 期"
-            keywords = ""
-            
-            # 找对应的脚本文件
-            script_name = ep_file.stem.replace('tts_', 'script_') + '.txt'
-            script_file = scripts_dir / script_name
-            
-            if script_file.exists():
-                try:
-                    content = script_file.read_text(encoding='utf-8')
-                    lines = content.split('\n')
-                    for i, line in enumerate(lines):
-                        line = line.strip()
-                        # 获取关键字
-                        if line.startswith('# 关键字:') or line.startswith('#keywords:'):
-                            keywords = line.split(':')[1].strip() if ':' in line else ''
-                        # 获取第一段正文作为标题
-                        if line and not line.startswith('#') and not line.startswith('---'):
-                            # 取前50字作为标题
-                            title = line[:50]
-                            description = f"今日新闻播报"
-                            break
-                except:
-                    pass
-            
             # 从文件名提取日期
             date_str = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d")
+            
+            # 尝试匹配脚本文件的关键字
+            keywords = script_info.get(date_str, "")
             
             # 组合标题
             if keywords:
@@ -148,7 +144,7 @@ class Publisher:
                 'length': stat.st_size,
                 'pubDate': datetime.fromtimestamp(stat.st_mtime).strftime('%a, %d %b %Y %H:%M:%S GMT'),
                 'guid': f"episode-{ep_file.stem}",
-                'description': description
+                'description': "今日新闻播报"
             })
         
         # 按日期排序
