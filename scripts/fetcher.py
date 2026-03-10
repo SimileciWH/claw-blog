@@ -34,6 +34,36 @@ class NewsFetcher:
             self.config = yaml.safe_load(f)
         self.output_dir = Path("./output/drafts")
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.state_file = Path("./output/processed_files.json")
+        self.processed = self._load_processed()
+        
+    def _load_processed(self) -> Dict:
+        """加载已处理文件记录"""
+        if self.state_file.exists():
+            with open(self.state_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}
+    
+    def _save_processed(self):
+        """保存已处理文件记录"""
+        with open(self.state_file, 'w', encoding='utf-8') as f:
+            json.dump(self.processed, f, ensure_ascii=False, indent=2)
+    
+    def _is_processed(self, file_path: Path) -> bool:
+        """检查文件是否已处理"""
+        key = str(file_path)
+        mtime = file_path.stat().st_mtime
+        # 如果记录存在且 mtime 没变，认为已处理
+        return key in self.processed and self.processed[key]['mtime'] == mtime
+    
+    def _mark_processed(self, file_path: Path):
+        """标记文件为已处理"""
+        key = str(file_path)
+        self.processed[key] = {
+            'mtime': file_path.stat().st_mtime,
+            'processed_at': datetime.now().isoformat()
+        }
+        self._save_processed()
         
     def fetch_rss(self) -> List[Dict]:
         """抓取 RSS 订阅源"""
@@ -106,6 +136,11 @@ class NewsFetcher:
                 if file_path.name.startswith('.'):
                     continue
                     
+                # 跳过已处理的文件（除非文件被修改过）
+                if self._is_processed(file_path):
+                    logger.info(f"  -> Skip (already processed): {file_path.name}")
+                    continue
+                    
                 try:
                     # 根据扩展名选择解析方式
                     ext = file_path.suffix.lower()
@@ -121,6 +156,9 @@ class NewsFetcher:
                     }
                     articles.append(article)
                     logger.info(f"  -> Read: {file_path.name}")
+                    
+                    # 标记为已处理
+                    self._mark_processed(file_path)
                 except Exception as e:
                     logger.error(f"  -> Error reading {file_path}: {e}")
         return articles
