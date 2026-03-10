@@ -106,10 +106,9 @@ class Publisher:
         
         # 获取所有脚本文件，提取TITLE
         script_info = {}
+        title_to_script = {}  # 标题 -> 脚本信息
         if scripts_dir.exists():
-            for sf in scripts_dir.glob("script_*.txt"):
-                # 用完整文件名作为key，比如 2026-03-10_001
-                key = sf.stem.replace('script_', '')
+            for sf in scripts_dir.glob("*.txt"):  # 不再限制 script_ 前缀
                 try:
                     content = sf.read_text(encoding='utf-8')
                     title = ""
@@ -118,7 +117,14 @@ class Publisher:
                         if line.startswith('# TITLE:') or line.startswith('TITLE:'):
                             title = line.replace('# TITLE:', '').replace('TITLE:', '').strip()
                             break
+                    
+                    # 用脚本文件名作为 key
+                    key = sf.stem.replace('script_', '')
                     script_info[key] = {'title': title}
+                    
+                    # 同时用标题作为 key（用于匹配非 script_ 前缀的音频文件）
+                    if title:
+                        title_to_script[title] = {'title': title}
                 except:
                     pass
         
@@ -127,16 +133,27 @@ class Publisher:
             stat = ep_file.stat()
             
             # 从MP3文件名提取key，比如 script_2026-03-10_001.mp3 -> 2026-03-10_001
-            key = ep_file.stem.replace('script_', '')
-            date_str = key.split('_')[0] if '_' in key else "unknown"
+            # 对于非 script_ 前缀的文件（如 高客单成交的信任密码.mp3），直接用文件名）
+            stem = ep_file.stem
+            if stem.startswith('script_'):
+                key = stem.replace('script_', '')
+                date_str = key.split('_')[0] if '_' in key else "unknown"
+                # 尝试匹配脚本文件的标题
+                info = script_info.get(key, {'title': ''})
+                title = info.get('title', '')
+            else:
+                # 非 script_ 前缀的文件，尝试用文件名匹配标题
+                key = stem
+                date_str = "unknown"
+                info = title_to_script.get(key, {'title': ''})
+                title = info.get('title', '')
+                if not title:
+                    # 如果没匹配到，用文件名作为标题
+                    title = stem
             
-            # 尝试匹配脚本文件的标题
-            info = script_info.get(key, {'title': ''})
-            title = info.get('title', '')
-            
-            # 优先用 LLM 生成的标题，否则用摘要
+            # 优先用 LLM 生成的标题，否则用文件名
             if title:
-                final_title = f"{date_str} · {title}"
+                final_title = f"{date_str} · {title}" if date_str != "unknown" else title
             else:
                 final_title = f"{date_str} · 播客"
             
