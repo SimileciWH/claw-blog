@@ -101,7 +101,7 @@ class Publisher:
         if not output_dir.exists():
             return []
         
-        # 获取所有脚本文件，提取日期和内容摘要
+        # 获取所有脚本文件，提取日期和SUMMARY
         script_info = {}
         if scripts_dir.exists():
             for sf in scripts_dir.glob("script_*.txt"):
@@ -111,16 +111,15 @@ class Publisher:
                     date_part = parts[0]
                     try:
                         content = sf.read_text(encoding='utf-8')
-                        # 提取正文内容（跳过元数据行）
+                        # 提取 SUMMARY 行
                         summary = ""
                         for line in content.split('\n'):
                             line = line.strip()
-                            # 跳过元数据和分隔线
-                            if line.startswith('#') or line.startswith('---') or not line:
-                                continue
-                            # 取第一段有效内容的前26个字
-                            summary = line[:26]
-                            break
+                            if line.startswith('SUMMARY:'):
+                                summary = line.replace('SUMMARY:', '').strip()
+                                # 限制26字
+                                summary = summary[:26]
+                                break
                         script_info[date_part] = summary
                     except:
                         pass
