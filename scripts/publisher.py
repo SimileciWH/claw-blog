@@ -138,7 +138,7 @@ class Publisher:
             if title:
                 final_title = f"{date_str} · {title}"
             else:
-                final_title = f"{date_str} · 高客单成交播客"
+                final_title = f"{date_str} · 播客"
             
             episodes.append({
                 'title': final_title,
